@@ -3,7 +3,11 @@ fastapi
 pytest
 httpx
 sqlalchemy
-sqlite
 pydantic
 uvicorn
 python-dotenv
+pydantic
+uuid
+bcrypt
+pydantic[Email]
+pytest-asyncio
