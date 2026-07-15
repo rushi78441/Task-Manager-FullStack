@@ -1,0 +1,8 @@
+# Python (Backend)
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+env/
+*.db
+.env

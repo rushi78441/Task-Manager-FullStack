@@ -1,0 +1,9 @@
+## Backend dependencies
+fastapi
+pytest
+httpx
+sqlalchemy
+sqlite
+pydantic
+uvicorn
+python-dotenv
