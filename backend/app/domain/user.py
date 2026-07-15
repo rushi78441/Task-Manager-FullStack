@@ -1,6 +1,7 @@
 from uuid import UUID,uuid4
 
-class User:
+
+class User():
 
     def __init__(self, email : str, hashed_password : str, id : UUID = None):
         """

@@ -11,3 +11,4 @@ uuid
 bcrypt
 pydantic[Email]
 pytest-asyncio
+pyjwt

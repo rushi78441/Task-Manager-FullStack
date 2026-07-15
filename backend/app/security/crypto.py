@@ -1,5 +1,9 @@
 import bcrypt
-
+from datetime import datetime,timedelta,timezone
+import jwt
+from dotenv import load_dotenv
+load_dotenv()
+import os
 
 def hash_password(password : str) -> str:
     """
@@ -19,3 +23,23 @@ def verify_password(plain_password : str, hashed_password : str) -> bool:
     return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
 
 
+## JWT CONFIGS
+SECRET_KEY = os.getenv("SECRET_KEY")
+ALGORITHM = os.getenv("ALGORITHM")
+ACCESS_TOKEN_EXPIRE_MINUTES = os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES")
+
+# create jwt token
+def create_access_token(data : dict) -> str:
+    """
+    Generates a stateless JSON Web Token signed with our server's secret key.
+    """
+    to_encode = data.copy()
+
+    # calculate the excat expiration timestamp in UTC
+    expire = datetime.now(timezone.utc) + timedelta(minutes = int(ACCESS_TOKEN_EXPIRE_MINUTES))
+
+    # 'sub' (subject) represents the unique identifier, 'exp' represents the expiration claim
+    to_encode.update({"exp" : expire})
+
+    encoded_jwt = jwt.encode(to_encode, key = SECRET_KEY , algorithm = ALGORITHM)
+    return encoded_jwt

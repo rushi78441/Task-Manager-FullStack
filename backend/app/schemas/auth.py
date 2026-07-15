@@ -23,3 +23,18 @@ class UserResponse(BaseModel):
 
     # Modern Pydantic V2 Configuration syntax
     model_config = ConfigDict(from_attributes = True)
+
+
+## Login Request and Response Schemas
+class UserLoginRequest(BaseModel):
+    email : EmailStr
+    password : str
+
+
+## Token Response
+class TokenResponse(BaseModel):
+    access_token : str
+    token_type : str
+
+    # Modern Pydantic V2 Configuration syntax
+    model_config = ConfigDict(from_attributes = True)
