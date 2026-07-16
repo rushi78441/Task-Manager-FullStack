@@ -4,7 +4,7 @@ from app.main import app
 
 
 @pytest.mark.asyncio
-async def test_should_create_successfully_for_authenticated_user():
+async def test_should_create_task_successfully_for_authenticated_user():
     """
     An authenticated user providing a valid JWT token should be able
     to create a new task under their profile profile.
@@ -31,7 +31,7 @@ async def test_should_create_successfully_for_authenticated_user():
         access_token = login_response.json()["access_token"]
 
         # Construct the authenticated header
-        headers = {"Authorization" : f"Bearer {access_token}"}
+        headers = {"Authorization" : f"bearer {access_token}"}
 
         # Act : Attempt to create task
         response = await ac.post("/tasks" , json = task_payload , headers = headers)
@@ -43,5 +43,52 @@ async def test_should_create_successfully_for_authenticated_user():
     assert data["descryption"] == "Setup CI/CD workflows using github actions"
     assert "task_id" in data
     assert "user_id" in data    ## Prove that task is anchored to our user 
+
+
+@pytest.mark.asyncio
+async def test_should_fetch_only_tasks_belonging_to_authenticated_user():
+    """
+    A user should be able to list all of their active or completed tasks, 
+    ensuring isolation from other users' accounts.
+    """
+
+    transpot = ASGITransport(app = app)
+    async with AsyncClient(transport = transpot, base_url = "http://test/") as ac:
+        
+        ## Setup User A and Create Task 
+        user_a = {"email" : "usera@example.com" , "password" : "password!123"}
+        await ac.post("/auth/register" , json = user_a)
+        login_a = await ac.post("/auth/login" , json = user_a)
+        token_a = login_a.json()["access_token"]
+
+        # Create Task A
+        await ac.post("/tasks",
+                json = {"task_title" : "User A Task", "descryption" : "Private to A"},
+                headers = {"Authorization" : f"bearer {token_a}"}              
+        )
+
+        ## Setup User B and Create Task
+        user_b = {"email" : "userb@example.com", "password" : "password!123"}
+        await ac.post("/auth/register" , json = user_b)
+        login_b = await ac.post("/auth/login" , json=user_b)
+        token_b = login_b.json()["access_token"]
+
+        # Create Task B
+        await ac.post("/tasks",
+                json = {"task_title" : "User B Task" , "descryption" : "Private to B"},
+                headers = {"Authorization" : f"Bearer {token_b}"}                
+         )
+        
+
+        ## Act : Attempt to retrive task of User A
+        response = await ac.get("/tasks" , headers = {"Authorization" : f"bearer {token_a}"})
+
+    ## Assert : User A only see exactly 1 task and it is their own one
+    assert response.status_code == 200
+    tasks = response.json()
+    assert len(tasks) == 1
+    assert tasks[0]["task_title"] == "User A Task"
+    assert tasks[0]["descryption"] == "Private to A"
+
 
 

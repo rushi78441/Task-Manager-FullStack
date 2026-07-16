@@ -64,7 +64,10 @@ class SQLTaskRepository(ITasksRepository):
     
     def get_by_user(self, user_id: uuid.UUID) -> list[Task]:
         # filter all tasks of user by user id
-        tasks = self.db.query(SQLTaskTable).filter(SQLTaskTable.user_id == str(user_id)).first()
+        tasks = self.db.query(SQLTaskTable).filter(SQLTaskTable.user_id == str(user_id)).all()
+
+        if not tasks:
+            return []
 
         ## return tasks in a list by smart for loop
         return [

@@ -59,8 +59,6 @@ async def test_should_authentic_user_and_generate_jwt_token():
         # Act : Attempt to login
         response = await ac.post("/auth/login" , json = login_payload)
 
-    print("\n=== Pydantic Validation Error Details ===", response.text)
-
     # assert respose 
     assert response.status_code == 200
     data = response.json()
@@ -90,8 +88,6 @@ async def test_should_reject_invalid_password():
         # populate the user , so account exists in database
         await ac.post("/auth/register" ,json = registration_payload)
         response = await ac.post("/auth/login" , json = login_payload)
-
-    print("\n=== Pydantic Validation Error Details ===", response.text)
 
     
     ## assert

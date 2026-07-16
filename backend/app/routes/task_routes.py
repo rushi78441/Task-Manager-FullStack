@@ -11,6 +11,7 @@ from app.security.auth_dependency import get_current_user
 
 task_router = APIRouter(prefix = "/tasks" , tags = ['Tasks'])
 
+## Task Creation route
 @task_router.post("", response_model = TaskResponse , status_code = status.HTTP_201_CREATED)
 def create_task(
     payload : TaskCreateRequest,
@@ -18,7 +19,7 @@ def create_task(
     current_user : User = Depends(get_current_user)
 ):
     """
-    Endpoint that accepts a title and optional description, ties the task to the
+    Endpoint that accepts a title and optional descryption, ties the task to the
     decoded user profile, and persists it.
     """
 
@@ -34,3 +35,19 @@ def create_task(
     saved_task = repo.save(new_task)
 
     return saved_task
+
+
+## Task Revrival/Fetch route
+@task_router.get("", response_model = list[TaskResponse])
+def fetch_user_task(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Endpoint that fetches all tasks assigned specifically to the logged-in user.
+    """
+
+    repo = SQLTaskRepository(db)
+    user_tasks = repo.get_by_user(user_id = current_user.id)
+
+    return user_tasks
