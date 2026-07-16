@@ -100,3 +100,36 @@ def toggle_task_status(
     updated_task = repo.save(task)
     return updated_task
 
+
+## Task Deletion Route
+@task_router.delete("/{task_id}")
+def delete_task(
+    task_id : uuid.UUID,
+    db: Session = Depends(get_db),
+    current_user : User = Depends(get_current_user)
+):
+    """
+    Delete the task by Task Id.
+    """
+    repo = SQLTaskRepository(db)
+
+    ## Fetch the task to delete
+    task = repo.get_by_id(task_id)
+    # if task not found
+    if not task:
+        raise HTTPException(
+            status_code = status.HTTP_404_NOT_FOUND,
+            detail = "Task not found"
+        )
+    
+    ## Authorization Guard : authenticated user only delete his own task , not others
+    if task.user_id != current_user.id:
+        raise HTTPException(
+            status_code = status.HTTP_403_FORBIDDEN,
+            detail = "Not authorized to delete this task"
+        ) 
+    
+    ## Deletion of task from db
+    repo.delete(task_id)
+
+    return {"message" : "Task Deleted successfully"}

@@ -124,6 +124,46 @@ async def test_should_toggle_task_status_successfully_for_owner():
     assert response.status_code == 200
     assert response.json()["status"] == "completed"
 
+@pytest.mark.asyncio
+async def test_should_delete_task_successfully_by_task_owner():
+    """
+    The owner of a task should be able to permanently delete it,
+    and subsequent fetches should return a 404.
+    """
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport , base_url = "http://test/") as ac:
+        # User
+        user = {
+            "email" : "delete@example.com",
+            "password" : "password!123"
+        }
+
+        ## Register and login user
+        await ac.post("/auth/register" , json = user)
+        login = await ac.post("/auth/login" , json = user)
+        token = login.json()["access_token"]
+        headers = {"Authorization" : f"bearer {token}"}
+
+        ## Create task 
+        task = await ac.post("/tasks", 
+                json = {"task_title" : "Delete My task" , "descrypion" : "Task should be deleted"},
+                headers = headers
+        )
+        task_id = task.json()["task_id"]
+
+        ## ACT : Delete task by task id
+        delete_response = await ac.delete(f"/tasks/{task_id}", headers = headers)
+
+        ## Verify task is gone now by fetching it
+        list_response = await ac.get("/tasks" , headers=headers)
+
+    # Assert
+    assert delete_response.status_code == 200
+    assert delete_response.json()["message"] == "Task Deleted successfully"
+
+    # The return list should be empty
+    assert len(list_response.json()) == 0
 
 
 
