@@ -6,7 +6,7 @@ from app.domain.user import User
 from app.security.crypto import hash_password, verify_password , create_access_token
 from app.sql_repo.user_repository import SQLUserRepository
 
-router = APIRouter(prefix = "/auth", tags = ['Authentication'])
+auth_router = APIRouter(prefix = "/auth", tags = ['Authentication'])
 
 # Structural dependency to provision an isolated DB Session per request transaction
 def get_db():
@@ -17,7 +17,7 @@ def get_db():
         db.close()
 
 
-@router.post("/register" , response_model = UserResponse , status_code = status.HTTP_201_CREATED)
+@auth_router.post("/register" , response_model = UserResponse , status_code = status.HTTP_201_CREATED)
 def register_user(payload: UserRegisterRequest , db : Session = Depends(get_db)) -> UserResponse:
     repo = SQLUserRepository(db)
 
@@ -40,7 +40,7 @@ def register_user(payload: UserRegisterRequest , db : Session = Depends(get_db))
 
 
 ## Login routes
-@router.post("/login" , response_model = TokenResponse)
+@auth_router.post("/login" , response_model = TokenResponse)
 def login_user(payload : UserLoginRequest, db : Session = Depends(get_db)) -> TokenResponse:
     repo = SQLUserRepository(db)
     
