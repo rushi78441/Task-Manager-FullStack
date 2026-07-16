@@ -2,7 +2,7 @@ from fastapi import Depends,HTTPException,APIRouter,status
 from sqlalchemy.orm import Session
 import uuid
 
-from app.schemas.task import TaskResponse, TaskCreateRequest
+from app.schemas.task import TaskResponse, TaskCreateRequest, TaskStatusUpdateRequest
 from app.domain.task import Task
 from app.domain.user import User
 from app.sql_repo.task_repository import SQLTaskRepository
@@ -51,3 +51,52 @@ def fetch_user_task(
     user_tasks = repo.get_by_user(user_id = current_user.id)
 
     return user_tasks
+
+
+## Task Status Toggle Route
+@task_router.patch("/{task_id}" , response_model = TaskResponse)
+def toggle_task_status(
+    task_id : uuid.UUID,
+    payload : TaskStatusUpdateRequest,
+    db : Session = Depends(get_db),
+    current_user : User = Depends(get_current_user)
+):
+    
+    """
+    Updates the execution status of a specific task using rich domain actions.
+    """
+    repo = SQLTaskRepository(db)
+
+    # Fetch the task to update 
+    task = repo.get_by_id(task_id)
+
+    # if task not found
+    if not task:
+        raise HTTPException(
+            status_code = status.HTTP_404_NOT_FOUND,
+            detail = "Task Not Found"
+        )
+    
+    # Security guardrails
+    # If task user_id is not matched with current user Id
+    if task.user_id != current_user.id:
+        raise HTTPException(
+            status_code = status.HTTP_403_FORBIDDEN,
+            detail = "Not Authorized to modify this task"
+        )
+    
+    ## Now toggle logic
+    if payload.status == "completed":
+        task.complete()
+    elif payload.status == "active":
+        task.activate()
+    else:
+        raise HTTPException(
+            status_code = status.HTTP_400_BAD_REQUEST,
+            detail = "Invalid status transition Request"
+        )
+    
+    ## save updated task 
+    updated_task = repo.save(task)
+    return updated_task
+

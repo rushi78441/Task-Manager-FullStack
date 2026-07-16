@@ -91,4 +91,39 @@ async def test_should_fetch_only_tasks_belonging_to_authenticated_user():
     assert tasks[0]["descryption"] == "Private to A"
 
 
+@pytest.mark.asyncio
+async def test_should_toggle_task_status_successfully_for_owner():
+    """
+    The owner of a task should be able to update its status to 'completed'.
+    """
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport = transport , base_url = "http://test/") as ac:
+        ## Register and login user
+        user = {
+            "email" : "user@example.com",
+            "password" : "password!123"
+        }
+        await ac.post("/auth/register" , json = user)
+
+        login_user = await ac.post("/auth/login" , json = user)
+        token_user = login_user.json()["access_token"]
+        header = {"Authorization" : f"bearer {token_user}"}
+
+        ## Create task (status : active) by default
+        task = await ac.post("/tasks" ,
+                json = {"task_title" : "TDD Task", "descryption" : "write mode code"},
+                headers = header
+        )
+        task_id = task.json()["task_id"]
+
+        # ACt : toggle task from active to completed -->  we will use patch rest APi
+        response = await ac.patch(f"/tasks/{task_id}", json = {"status" : "completed"}, headers = header)
+
+    # Assert 
+    assert response.status_code == 200
+    assert response.json()["status"] == "completed"
+
+
+
 

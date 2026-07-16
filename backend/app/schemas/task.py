@@ -13,3 +13,6 @@ class TaskResponse(BaseModel):
     user_id : uuid.UUID
 
     model_config = ConfigDict(from_attributes=True)
+
+class TaskStatusUpdateRequest(BaseModel):
+    status : str
