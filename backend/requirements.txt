@@ -12,3 +12,4 @@ bcrypt
 pydantic[Email]
 pytest-asyncio
 pyjwt
+pydantic-settings

@@ -1,5 +1,6 @@
 import bcrypt
 from datetime import datetime,timedelta,timezone
+from app.config import settings
 import jwt
 from dotenv import load_dotenv
 load_dotenv()
@@ -24,9 +25,9 @@ def verify_password(plain_password : str, hashed_password : str) -> bool:
 
 
 ## JWT CONFIGS
-SECRET_KEY = os.getenv("SECRET_KEY")
-ALGORITHM = os.getenv("ALGORITHM")
-ACCESS_TOKEN_EXPIRE_MINUTES = os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES")
+SECRET_KEY = os.getenv("SECRET_KEY", "fallback-secret-key-for-testing-purposes-only")
+ALGORITHM = os.getenv("ALGORITHM", "HS256")
+ACCESS_TOKEN_EXPIRE_MINUTES = os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES" , "30")
 
 # create jwt token
 def create_access_token(data : dict) -> str:
@@ -36,7 +37,7 @@ def create_access_token(data : dict) -> str:
     to_encode = data.copy()
 
     # calculate the excat expiration timestamp in UTC
-    expire = datetime.now(timezone.utc) + timedelta(minutes = int(ACCESS_TOKEN_EXPIRE_MINUTES))
+    expire = datetime.now(timezone.utc) + timedelta(minutes = settings.ACCESS_TOKEN_EXPIRE_MINUTES)
 
     # 'sub' (subject) represents the unique identifier, 'exp' represents the expiration claim
     to_encode.update({"exp" : expire})
