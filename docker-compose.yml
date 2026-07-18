@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  # --- Backend Service (FastAPI) ---
+  backend:
+    container_name: taskmaster-backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    restart: always
+
+  # --- Frontend Service (React/Vite + Nginx) ---
+  frontend:
+    container_name: taskmaster-frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    restart: always
+    depends_on:
+      - backend
