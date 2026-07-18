@@ -10,17 +10,23 @@ import './App.css'
 import RegisterPage from './pages/RegisterPage'
 
 function App() {
+
+  // Simple state initialization: Read straight from memory on page refresh
+  const [userEmail, setUserEmail] = useState(() => {
+    return localStorage.getItem('saved_user') || '';
+  });
+
   return (
     <Routes>
       {/* Root path defaults to Login */}
-      <Route path="/" element={<LoginPage />} />
-      <Route path="/login" element={<LoginPage />} />
+      <Route path="/" element={<LoginPage userEmail={userEmail} setUserEmail={setUserEmail} />} />
+      <Route path="/login" element={<LoginPage userEmail={userEmail} setUserEmail={setUserEmail} />} />
       
       {/* Register Page path */}
-      <Route path='/register' element={<RegisterPage/>} />
+      <Route path='/register' element={<RegisterPage userEmail={userEmail} setUserEmail={setUserEmail} />} />
 
       {/* Dashboard path */}
-      <Route path="/dashboard" element={<DashBoardPage />} />
+      <Route path="/dashboard" element={<DashBoardPage userEmail={userEmail} setUserEmail={setUserEmail} />} />
     </Routes>
   )
 }

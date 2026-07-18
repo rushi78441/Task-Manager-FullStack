@@ -93,7 +93,6 @@ async def test_should_reject_invalid_password():
     ## assert
     assert response.status_code == 401
     assert response.json()["detail"] == "Invalid credentials"
-
-
+    
 
 

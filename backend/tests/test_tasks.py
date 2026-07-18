@@ -63,7 +63,7 @@ async def test_should_fetch_only_tasks_belonging_to_authenticated_user():
 
         # Create Task A
         await ac.post("/tasks",
-                json = {"task_title" : "User A Task", "descryption" : "Private to A"},
+                json = {"task_title" : "User A Task", "descryption" : "Private to A" , "status" : "active"},
                 headers = {"Authorization" : f"bearer {token_a}"}              
         )
 
@@ -75,8 +75,8 @@ async def test_should_fetch_only_tasks_belonging_to_authenticated_user():
 
         # Create Task B
         await ac.post("/tasks",
-                json = {"task_title" : "User B Task" , "descryption" : "Private to B"},
-                headers = {"Authorization" : f"Bearer {token_b}"}                
+                json = {"task_title" : "User B Task" , "descryption" : "Private to B" , "status" : "active"},
+                headers = {"Authorization" : f"bearer {token_b}"}                
          )
         
 
@@ -112,7 +112,7 @@ async def test_should_toggle_task_status_successfully_for_owner():
 
         ## Create task (status : active) by default
         task = await ac.post("/tasks" ,
-                json = {"task_title" : "TDD Task", "descryption" : "write mode code"},
+                json = {"task_title" : "TDD Task", "descryption" : "write mode code" , "status" : "active"},
                 headers = header
         )
         task_id = task.json()["task_id"]
@@ -147,7 +147,7 @@ async def test_should_delete_task_successfully_by_task_owner():
 
         ## Create task 
         task = await ac.post("/tasks", 
-                json = {"task_title" : "Delete My task" , "descrypion" : "Task should be deleted"},
+                json = {"task_title" : "Delete My task" , "descrypion" : "Task should be deleted" , "status" : "active"},
                 headers = headers
         )
         task_id = task.json()["task_id"]

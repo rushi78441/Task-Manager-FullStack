@@ -2,7 +2,9 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 
-const LoginPage = () => {
+const API_URL = "http://127.0.0.1:8000"
+
+const LoginPage = ({ setUserEmail }) => {
   const navigate = useNavigate();
 
   // Loading sign in states
@@ -11,12 +13,62 @@ const LoginPage = () => {
   // Credentials state
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  
+
   // Error handling state (Nice to have for functional UIs!)
   const [error, setError] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("")
+    setIsLoading(true)
+
+    // simulate Login API Request / Login Logic
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 1200))
+
+      // now hit Login api and get response
+      const response = await fetch(`${API_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'Application/Json' },
+        body: JSON.stringify({
+          email: email,
+          password: password
+        })
+      })
+
+      const token = await response.json()
+
+      if (!token) {
+        console.log("Token is not generated")
+        return
+      }
+
+
+      // if login successfully
+      if (response.ok) {
+        setIsLoading(false)
+
+        // set token in local storage
+        localStorage.setItem('user_token', token.access_token)
+
+        setUserEmail(email)
+        localStorage.setItem('saved_user', email)
+
+        navigate("/dashboard")
+        console.log("Logged in Successfully")
+        return
+      }
+
+      if (response.status == 401) {
+        console.log("Invalid credentials")
+        setError("Invalid credentials")
+      }
+    } catch (err) {
+      console.error("Network Erro", err)
+    } finally {
+      setIsLoading(false)
+    }
+
   };
 
   return (
@@ -102,7 +154,7 @@ const LoginPage = () => {
           </button>
 
         </form>
-            {/* Footer Navigation link */}
+        {/* Footer Navigation link */}
         <div className="text-center mt-6">
           <p className="text-sm text-gray-600">
             Don't have an account?{" "}

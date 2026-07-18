@@ -27,7 +27,8 @@ def create_task(
     new_task = Task(
         task_title = payload.task_title,
         descryption = payload.descryption,
-        user_id = current_user.id
+        user_id = current_user.id,
+        status = payload.status
     )
 
     ## save the domain entity to our storage eng9ine via repository pattern

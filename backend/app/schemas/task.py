@@ -4,6 +4,7 @@ import uuid
 class TaskCreateRequest(BaseModel):
     task_title : str = Field(..., min_length=1,max_length=100)
     descryption: str = Field(default="")
+    status: str = Field(default="active")
 
 class TaskResponse(BaseModel):
     task_id : uuid.UUID
