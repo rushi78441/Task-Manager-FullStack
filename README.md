@@ -26,20 +26,33 @@ The **Task Manager Full-Stack Application** is constructed using a decoupled arc
 │       └── python-app.yml       # Unified CI multi-context orchestration
 ├── backend/
 │   ├── app/
-│   │   ├── core/               # Security, configurations, and JWT handlers
-│   │   ├── database/           # Engine setup, session management, and DB models
-│   │   ├── schemas/            # Data validation using Pydantic
-│   │   ├── crud/               # Isolated Database access logic 
-│   │   ├── api/                # FastAPI routing paths (Endpoints)
-│   │   └── main.py             # Main Application Initialization
-│   ├── tests/                  # Test-Driven Development (TDD) Suite
-│   ├── Dockerfile
-│   └── requirements.txt
+│   │   ├── database/           # Connection engines and sessions
+│   │   ├── domain/             # Core business entity logic layers
+│   │   ├── routes/             # FastAPI routing modules (Endpoints)
+│   │   ├── schemas/            # Data validation using Pydantic models
+│   │   ├── security/           # Hashing and authentication implementations
+│   │   ├── sql_repo/           # Data access repository layer implementations
+│   │   ├── config.py           # Application environment configurations
+│   │   ├── interfaces.py       # Core interface layer abstractions
+│   │   └── main.py             # Main application entry point
+│   ├── tests/
+│   │   ├── test_auths.py       # TDD suites for security and login workflows
+│   │   └── test_tasks.py       # TDD suites for CRUD task management
+│   ├── .TaskManager.db         # SQLite dynamic datastore
+│   ├── compose.yaml            # Docker Compose backend orchestrations
+│   ├── Dockerfile              # Container building blueprints
+│   └── requirements.txt        # Frozen dependencies manifest
 └── frontend/
-    ├── src/                    # UI Components and state integration
-    ├── package.json
-    ├── tailwind.config.js
-    └── vite.config.js
+    ├── src/
+    │   ├── assets/             # Static graphic assets and logos
+    │   ├── components/         # Reusable presentation parts (TaskForm, TaskItem)
+    │   ├── pages/              # Structural view routing (DashBoardPage, LoginPage, RegisterPage)
+    │   ├── App.jsx             # Main Application layout context
+    │   └── main.jsx            # DOM anchoring injection layer
+    ├── compose.yaml            # Docker Compose frontend orchestrations
+    ├── Dockerfile              # Container building blueprints
+    ├── package.json            # Node configuration scripts
+    └── vite.config.js          # Vite build tool optimizations
 ```
 
 ---
@@ -52,7 +65,7 @@ The backend conforms strictly to a **Clean Layered Architecture**, separating co
 ```text
   ┌─────────────────────────────────────────────────────────┐
   │                   INTERFACE LAYER                       │
-  │     [ FastAPI Routers / Endpoints ]                     │
+  │     [ app/routes/ & app/interfaces.py ]                 │
   │     - JSON Parsing          - HTTP Status Handling      │
   │     - Request/Response      - Dependency Injection      │
   └────────────────────────────┬────────────────────────────┘
@@ -60,32 +73,32 @@ The backend conforms strictly to a **Clean Layered Architecture**, separating co
                                ▼
   ┌─────────────────────────────────────────────────────────┐
   │                 BUSINESS / DOMAIN LAYER                 │
-  │     [ CRUD Execution Engine & Security Logic ]          │
+  │     [ app/domain/ & app/security/ ]                     │
   │     - Hashing (Passlib)     - Task State Logic          │
   │     - JWT Token Handling    - Query Filters             │
   └────────────────────────────┬────────────────────────────
-                               │ (Communicates via SQLAlchemy ORM)
+                               │ (Abstracted data layer access)
                                ▼
   ┌─────────────────────────────────────────────────────────┐
-  │                  DATABASE LAYER                         │
-  │     [ Core Engine & Relational Storage ]                │
+  │                  DATABASE REPOSITORY LAYER              │
+  │     [ app/sql_repo/ & app/database/ ]                   │
   │     - SQLAlchemy Models     - Session Local Lifecycle   │
   │     - Core Database Engine  - SQL Operations            │
   └─────────────────────────────────────────────────────────┘
 ```
 
-* **Interface Layer:** Validates runtime HTTP payloads using strict Pydantic parsing types and passes inputs down securely.
-* **Business / Domain Layer:** Encapsulates the operations governing tasks and access identity.
-* **Database Layer:** Manages physical records mapped dynamically over an abstracted engine instance using SQLAlchemy.
+* **Interface Layer:** Validates runtime HTTP payloads using strict Pydantic parsing types (`app/schemas/`) and processes endpoints via unified application interfaces.
+* **Business / Domain Layer:** Encapsulates core structures inside the `app/domain/` scope, completely separating structural operational code from raw framework features.
+* **Database Repository Layer:** Implements data queries inside `app/sql_repo/` to decouple external storage implementations from internal system behaviors.
 
 ---
 
 ## 3. Authentication and Security Protocols
 
 User onboarding and task manipulation are fully protected by a cryptographically signed workflow:
-1. **Password Hashing:** Passwords are never stored in plaintext. They are systematically processed using the `passlib` crypt suite using **Bcrypt** salts.
+1. **Password Hashing:** Passwords are never stored in plaintext. They are systematically processed using the `passlib` crypt suite using **Bcrypt** salts located inside the `app/security/` module.
 2. **Tokenization Strategy:** Authentication is managed out-of-band via bearer access tokens using **HMAC SHA-256 signatures**.
-3. **Guard Interceptors:** Secured paths include `Depends()` handlers injected into the FastAPI router to intercept, decrypt, and load the active database-scoped identity before handling instructions.
+3. **Guard Interceptors:** Secured paths include `Depends()` handlers injected into the FastAPI routes to intercept, decrypt, and load the active database-scoped identity before handling instructions.
 
 ---
 
@@ -94,11 +107,11 @@ User onboarding and task manipulation are fully protected by a cryptographically
 The backend enforces decoupled, scalable software engineering practices by adapting specific SOLID principles:
 
 * **S - Single Responsibility Principle (SRP):**
-  Every file handles precisely one execution domain. `models.py` strictly handles schema-to-table physical maps; `schemas.py` acts exclusively as input data enforcement; `crud.py` isolation means routing pathways never directly query or append raw modifications into backend stores.
+  Every directory handles precisely one execution domain. Modules inside `app/database/` configure connection life-cycles, while database interactions are completely isolated inside `app/sql_repo/` so route handlers don't directly handle queries.
 * **O - Open/Closed Principle (OCP):**
-  API parameters and models extend dynamic validation parameters via Pydantic model inheritance. Features can easily configure custom serialization criteria without breaking core endpoint behaviors.
+  System architectures define interfaces inside `app/interfaces.py`. New behavior can be appended by extending data validation abstractions without modifying existing core logic blocks.
 * **D - Dependency Inversion Principle (DIP):**
-  Instead of instantiating session variables globally, endpoints depend directly on an abstracted session yield runtime (`get_db`) injected seamlessly via FastAPI’s native Dependency Injection framework (`Depends(get_db)`), ensuring effortless database replacement and mocking during test setups.
+  Instead of instantiating session variables globally, endpoints depend directly on an abstracted session yield runtime injected seamlessly via FastAPI’s native Dependency Injection framework (`Depends`), ensuring effortless database replacement and mocking during test setups.
 
 ---
 
@@ -108,14 +121,15 @@ The system was developed under a strict TDD mindset using `pytest`. The integrat
 
 ### Test Function Catalog
 
-| Test Function | Target Scope | Description |
-| :--- | :--- | :--- |
-| `test_user_registration_success` | Auth / Core | Submits valid user schemas to verify successful password hashing and persistence within the DB engine. |
-| `test_user_login_and_jwt_generation` | Auth / Core | Validates plain text credentials against hashed records, issuing an authentic Bearer JWT payload with expiration metrics. |
-| `test_create_task_entry` | Task Feature | Validates payload instantiation, making sure that newly recorded tasks securely inherit the signed-in user's index ID. |
-| `test_fetch_user_tasks` | Task Feature | Validates that fetched indices belong strictly to the authorized request handle, guaranteeing absolute isolation between users. |
-| `test_toggle_task_status` | Task Feature | Mutates state configurations (e.g., flipping `is_completed` from `false` to `true`) and asserts structural consistency. |
-| `test_delete_task_execution` | Task Feature | Dispatches drop execution instructions to verify complete entry purging from persistent relational contexts. |
+#### 🔑 Authentication Specs (`tests/test_auths.py`)
+* `test_user_registration_success`: Submits valid user schemas to verify successful password hashing and persistence within the DB engine.
+* `test_user_login_and_jwt_generation`: Validates plain text credentials against hashed records, issuing an authentic Bearer JWT payload with expiration metrics.
+
+#### 📝 Task Feature Specs (`tests/test_tasks.py`)
+* `test_create_task_entry`: Validates payload instantiation, making sure that newly recorded tasks securely inherit the signed-in user's index ID.
+* `test_fetch_user_tasks`: Validates that fetched indices belong strictly to the authorized request handle, guaranteeing absolute isolation between users.
+* `test_toggle_task_status`: Mutates state configurations (e.g., flipping `is_completed` from `false` to `true`) and asserts structural consistency.
+* `test_delete_task_execution`: Dispatches drop execution instructions to verify complete entry purging from persistent relational contexts.
 
 ---
 
@@ -126,7 +140,7 @@ The workflow maps tasks directly to targeted repository contexts using automated
 ### Workflow Mechanics
 * **Isolation Mapping:** Sets directory targets specifically to the `backend/` path space.
 * **Dependency Freezing:** Generates and validates Python locks to rule out structural deviations across build versions.
-* **Automation Checks:** Runs the entire TDD test harness inside a temporary runtime environment on every patch integration.
+* **Automation Checks:** Runs the entire TDD test harness (`test_auths.py` and `test_tasks.py`) inside a temporary runtime environment on every patch integration.
 * **Docker Registry Authorization Verification:** Validates registry connectivity, verifying absolute environment stability ahead of deployment.
 
 ---
